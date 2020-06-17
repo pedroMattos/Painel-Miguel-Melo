@@ -20,7 +20,8 @@ export default {
     async logout() {
       await this.$firebase.auth().signOut();
       this.$router.push({ name: 'Login' });
-      location.reload();
+      localStorage.removeItem('Uid')
+      // location.reload();
     },
   }
 };

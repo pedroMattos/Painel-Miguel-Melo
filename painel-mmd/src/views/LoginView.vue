@@ -15,6 +15,7 @@
           </div>
         </div>
         <input class="btn" type="submit" value="Entrar">
+        <p class="red-text">{{ error }}</p>
       </form>
   </section>
 </template>
@@ -26,6 +27,7 @@ export default {
     return {
       mail: null,
       password: null,
+      error: null,
     };
   },
   methods: {
@@ -37,16 +39,19 @@ export default {
         // realiza a autenticação
         const res = await this.$firebase.auth().signInWithEmailAndPassword(mail, password);
         window.uid = res.user.uid;
+        localStorage.setItem('Uid', res.user.uid);
         if (window.uid) {
           this.$router.push({ name: 'Pannel' });
+          window.location.reload();
         } else {
-          // this.$router.push({ name: 'login' });
+          this.$router.push({ name: 'login' });
         }
       } catch (e) {
         // Tratamento de erros
         const notExist = 'Error: There is no user record corresponding to this identifier. The user may have been deleted.';
         const invalidPass = 'Error: The password is invalid or the user does not have a password.';
         const connection = 'Error: A network error (such as timeout, interrupted connection or unreachable host) has occurred.';
+        context.error = e;
         // eslint-disable-next-line eqeqeq
         if (e == connection) {
           const error = 'Erro: Ocorreu um erro de rede (como tempo limite, conexão interrompida ou host inacessível)';

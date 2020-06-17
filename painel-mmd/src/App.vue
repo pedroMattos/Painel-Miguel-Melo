@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <navbar/>
+    <navbar v-if="Uid"/>
     <router-view class="container"/>
   </div>
 </template>
@@ -15,11 +15,16 @@ export default {
   },
   data() {
     return {
-      uid: window.uid,
-    };
+      Uid: null,
+    }
+  },
+  watch: {
+    $route() {
+      this.Uid = localStorage.getItem('Uid');
+    }
   },
   mounted() {
-    this.uid = window.uid;
+    this.Uid = localStorage.getItem('Uid');
   },
 };
 </script>
