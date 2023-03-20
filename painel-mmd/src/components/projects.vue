@@ -1,19 +1,19 @@
 <template>
   <section>
-    <div v-for="(item, key) in projectData"
+    <div v-for="(item, key) in projectsData"
     :key="key"
     class="projeto modal-trigger-custom">
       <p class="remove red-text" @click.prevent="removeItem(projectData[key].name)">X</p>
       <div class="row">
         <div class="img-area col s12 m6">
-            <img :src="item.images[0]" :alt="item.alt">
+          <img :src="getImageUrl(item.banner)">
         </div>
         <div class="infos col s12 m6">
-          <p>Nome: {{ item.name }}</p>
-          <p>Tipo: {{ item.type }}</p>
-          <p>Imagens: {{ item.images.length }}</p>
+          <p>Nome: {{ item.title }}</p>
+          {{ '../assets/images/'+item.banner+'.png' }}
+          <p>Imagens: {{ item.media.length }}</p>
           <p>Slug: {{ item.slug }}</p>
-          <p>Postado em: {{ item.date }} - Última edição: {{ item.last_edit }}</p>
+          <p>Postado em: {{ item.date }} - Última edição: {{ item?.last_edit }}</p>
           <button class="trigger btn" :target="item.slug">Editar</button>
         </div>
       </div>
@@ -24,6 +24,7 @@
 
 <script>
 import modalEdit from './modal.vue'
+import getProject from "@/services/getProjects";
 
 export default {
   name: 'projects',
@@ -32,13 +33,24 @@ export default {
   },
   data() {
     return {
+      projectsData: null,
       projectData: [],
     };
   },
   mounted() {
     // this.getData();
   },
+  beforeMount() {
+    this.displayProjects();
+  },
   methods: {
+    async displayProjects() {
+      this.projectsData = await getProject();
+      this.loaded = true;
+    },
+    getImageUrl(url) {
+      return 'https://cdn.pixabay.com/photo/2023/01/01/21/33/mountain-7690893_960_720.jpg';
+    },
     getData() {
       const ref = this.$firebase.firestore().collection('jobs');
       const ctx = this;

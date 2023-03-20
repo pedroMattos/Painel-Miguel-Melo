@@ -2,10 +2,10 @@
   <!-- Modal Structure -->
   <div :id="identificador" class="custom row">
     <div class="content">
-      <h4>{{ dados.name }}</h4>
-      <div class="col s12 m4" v-for="images in dados.images" :key="images">
+      <h4>{{ dados.title }}</h4>
+      <div class="col s12 m4" v-for="images in dados.media" :key="images">
         <div>
-          <img :src="images" alt="">
+          <img :src="`../../assets/images/${images}.png`" alt="">
         </div>
       </div>
       <form @submit.prevent="attData">
@@ -30,17 +30,17 @@
         </div>
         <div class="row">
           <div class="input-field col s12">
-            <input v-model="dados.name" type="text">
+            <input v-model="dados.title" type="text">
             <label for="email">Nome</label>
           </div>
           <div class="input-field col s12">
             <input v-model="dados.slug" type="text">
             <label for="email">Slug</label>
           </div>
-          <div class="input-field col s12">
+          <!-- <div class="input-field col s12">
             <input v-model="dados.type" type="text">
             <label for="email">Tipo</label>
-          </div>
+          </div> -->
         </div>
         <input class="btn blue darken-2" type="submit" value="Atualizar">
         <button @click.prevent="close" class="btn red accent-4">Cancelar</button>
