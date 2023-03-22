@@ -1,6 +1,6 @@
 <template>
   <form @submit.prevent="addNewData">
-    <input placeholder="Nome" id="name" v-model="dataNew.name" name="name" type="text">
+    <input placeholder="Nome" id="name" v-model="dataNew.title" name="name" type="text">
     <input placeholder="credits" id="credits" v-model="dataNew.credits" name="credits" type="text">
     <input placeholder="description" id="description" v-model="dataNew.description" name="description" type="text">
     <p class="lower">Slug: {{ slug }}</p>
@@ -31,7 +31,7 @@ export default {
   data() {
     return {
       dataNew: {
-        name: null,
+        title: null,
         credits: null,
         description: null,
         date: null,
