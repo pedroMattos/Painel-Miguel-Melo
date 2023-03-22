@@ -10,14 +10,13 @@
         </div>
         <div class="infos col s12 m6">
           <p>Nome: {{ item.title }}</p>
-          {{ '../assets/images/'+item.banner+'.png' }}
           <p>Imagens: {{ item.media.length }}</p>
           <p>Slug: {{ item.slug }}</p>
           <p>Postado em: {{ item.date }} - Última edição: {{ item?.last_edit }}</p>
-          <button class="trigger btn" :target="item.slug">Editar</button>
+          <button class="trigger btn disabled" @click="() =>initModal(item.slug)">Editar</button>
         </div>
       </div>
-      <modal-edit :projeto="item" :id="item.slug"></modal-edit>
+      <!-- <modal-edit :projeto="item" :id="item.slug" /> -->
     </div>
   </section>
 </template>
@@ -35,6 +34,7 @@ export default {
     return {
       projectsData: null,
       projectData: [],
+      opennedModal: null
     };
   },
   mounted() {
@@ -72,20 +72,8 @@ export default {
         }, 500);
       });
     },
-    initModal() {
-      const trigger = document.getElementsByClassName('trigger');
-      const modal = document.getElementsByClassName('custom');
-      for (let i = 0; i < trigger.length; i++) {
-
-        trigger[i].addEventListener('click', () => {
-          const target = trigger[i].getAttribute('target');
-          for (let j = 0; j < modal.length; j++) {
-            if (modal[j].getAttribute('id') == target) {
-              modal[j].setAttribute('style', 'display:block');
-            }
-          }
-        })
-      }
+    initModal(slug) {
+      this.opennedModal = slug
     },
     removeItem(id) {
       const lower = id.toLowerCase();
