@@ -1,6 +1,6 @@
 <template>
   <form @submit.prevent="addNewData">
-    <input placeholder="Nome" id="name" v-model="dataNew.title" name="name" type="text">
+    <input placeholder="Nome" id="titleProject" v-model="dataNew.title" name="titleProject" type="text">
     <input placeholder="credits" id="credits" v-model="dataNew.credits" name="credits" type="text">
     <input placeholder="description" id="description" v-model="dataNew.description" name="description" type="text">
     <p class="lower">Slug: {{ slug }}</p>
@@ -11,7 +11,7 @@
           <div class="btn">
             <span>Escolher Banner</span>
             <input accept="image/*"
-            @change="handleFile"
+            @change="handleBanner"
             type="file">
           </div>
           <div class="file-path-wrapper">
@@ -19,6 +19,58 @@
           </div>
         </div>
       </div>
+
+      <label>
+        <input v-model="checkedStart" name="ImagemRadio" :value="{ type: 'image', media: null }" type="radio" />
+        <span>Imagem</span>
+      </label>
+      <label>
+        <input v-model="checkedStart" name="gifRadio" :value="{ type: 'gif', media: null }" type="radio" />
+        <span>Url de gif</span>
+      </label>
+      <label>
+        <input v-model="checkedStart" name="videoRadio" :value="{ type: 'video', media: null }" type="radio" />
+        <span>Url de video</span>
+      </label>
+
+      <div v-for="(receipt, index) in receipt" :key="index">
+        <p>
+          {{ receipt.name }}
+          <p class="remove red-text" @click.prevent="() => removeItem(dataNew, receipt.id)">X</p>
+        </p>
+      </div>
+
+      <div v-if="checkedStart?.type === 'image'">
+        <input placeholder="Titulo da Imagem" id="title" v-model="title" name="title" type="text">
+        <div class="file-field input-field">
+          <div class="btn">
+            <span>Escolher Imagem</span>
+            <input accept="image/*"
+              @change="handleFile"
+              type="file">
+          </div>
+          <div class="file-path-wrapper">
+            <input class="file-path validate" type="text">
+          </div>
+        </div>
+        <button class="btn blue darken-2" @click="() => save()">Salvar</button>
+        <button class="btn blue darken-2" @click="() => cancel()">Cancelar</button>
+      </div>
+      <div v-if="checkedStart?.type === 'gif'">
+        <input placeholder="Nome do gif" id="name" required v-model="name" name="name" type="text">
+        <input placeholder="Titulo do gif" id="title" v-model="title" name="title" type="text">
+        <input placeholder="Cole a url do gif aqui" id="gif" v-model="urlMedia" name="gif" type="text">
+        <button class="btn blue darken-2" @click="() => save()">Salvar</button>
+        <button class="btn blue darken-2" @click="() => cancel()">Cancelar</button>
+      </div>
+      <div v-if="checkedStart?.type === 'video'">
+        <input placeholder="Nome do video" id="name" required v-model="name" name="name" type="text">
+        <input placeholder="Titulo do video" id="video" v-model="title" name="title" type="text">
+        <input v-if="checkedStart?.type === 'video'" placeholder="Cole a url do video aqui" id="video" v-model="urlMedia" name="video" type="text">
+        <button class="btn blue darken-2" @click="() => save()">Salvar</button>
+        <button class="btn blue darken-2" @click="() => cancel()">Cancelar</button>
+      </div>
+      <br>
       <input class="btn blue darken-2" type="submit" value="Adicionar">
   </form>
 </template>
@@ -26,6 +78,10 @@
 <script>
 import addNewProject from '@/services/addNewProject.js'
 import uploadImage from '@/services/uploadImage.js'
+import uploadImageWork from '@/services/uploadImageWork.js'
+import { app } from "@/firebase/index";
+import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { mapGetters } from 'vuex'
 export default {
   name: 'new-form',
   data() {
@@ -47,56 +103,129 @@ export default {
       slug: null,
       fileNames: [],
       id: null,
+      checkedStart: null,
+      receipts: [],
+      temp: [],
+      urlMedia: null,
+      name: null,
+      title: null
     };
   },
+  computed: {
+    ...mapGetters([
+      'images',
+    ])
+  },
   watch: {
-    'dataNew.name' (val) {
+    'dataNew.title' (val) {
       const slug = val.replace(/[' ']/g, '-');
       this.slug = slug;
       let lowerS = slug.toLowerCase();
       this.dataNew.slug = lowerS;
+    },
+    urlMedia(val) {
+      this.temp.push({
+        type: this.checkedStart.type,
+        image: val,
+        name: this.name,
+        title: this.title,
+        id: new Date().getTime()
+      })
     }
   },
   methods: {
-    async addNewData() {
+    removeItem(data, id) {
+      console.log({data, id})
+      this.receipt = data.receipt.filter((receipt) => receipt.id !== id)
+    },
+    clear() {
+      this.checkedStart = null
+      this.title = null
+      this.temp = []
+      this.name = null
+      this.urlMedia = null
+    },
+    save() {
+      this.receipt.push(...this.temp)
+      this.clear()
+    },
+    cancel() {
+      this.clear()
+    },
+    addNewData() {
+      const storage = getStorage(app);
       const now = new Date;
       const date = now.getDate() +'/'+ now.getMonth() + '/' + now.getFullYear()
       this.dataNew.date = date;
-      const url = [];
-      if (this.banner) {
-        uploadImage(this.banner, this.dataNew)
+
+      if (this.banner.file) {
+        const metadata = {
+          contentType: 'image/jpeg'
+        };
+        const storageRef = ref(storage, `${this.dataNew.slug}/${this.banner.name}`);
+        const uploadTask = uploadBytesResumable(storageRef, this.banner.file, metadata);
+        uploadTask.on('state_changed',
+          (snapshot) => {},
+          (error) => {},
+          () => {
+            // Upload completed successfully, now we can get the download URL
+            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+              console.log('File available at', downloadURL);
+              this.dataNew.banner = downloadURL
+
+              console.log('percorrendo as imagens', this.receipt)
+              this.receipt.forEach((receipt) => {
+                if (receipt.type !== 'image') {
+                  this.dataNew.receipt.push({ image: receipt.image, type: receipt.type, title: receipt.title })
+                  return
+                }
+              })
+              this.receipt.forEach((receipt, index, array) => {
+                console.log('inserindo imagens', {receipt})
+                if (receipt.type === 'image') {
+                  const uploadTaskWorks = uploadBytesResumable(storageRef, receipt.file, metadata);
+                  uploadTaskWorks.on('state_changed',
+                    (snapshot) => {},
+                    (error) => {},
+                    () => {
+                      // Upload completed successfully, now we can get the download URL
+                      getDownloadURL(uploadTaskWorks.snapshot.ref).then((downloadURL) => {
+                        console.log('File available at', downloadURL, index);
+                        this.dataNew.receipt.push({ image: downloadURL, type: receipt.type, title: receipt.title })
+                        if (index === array.length -1) {
+                          console.log('imagens inseridas')
+                          console.log('inserindo dados finais', this.dataNew)
+                          addNewProject(this.dataNew)
+                        }
+                      });
+                    }
+                  );
+                  return
+                }
+              })
+
+              // console.log('inserindo novo projeto', this.dataNew)
+              // addNewProject(this.dataNew)
+            });
+          }
+        );
       }
-      // addNewProject(this.dataNew)
-      // if (this.receipt) {
-      //   for (let i = 0; i < this.lenght; i++) {
-      //       const snapshot = await this.$firebase.storage()
-      //       .ref(this.dataN.Nome)
-      //       .child(this.fileName[i])
-      //       .put(this.dataN.receipt[i]);
-      //       url.push(await snapshot.ref.getDownloadURL());
-      //   }
-      //   this.dataN.Imagens = url
-      //   const payload = {
-      //       Nome: this.dataN.Nome,
-      //       Tipo: this.dataN.Tipo,
-      //       Imagens: this.dataN.Imagens,
-      //       Data: this.dataN.Data,
-      //       Slug: this.dataN.Slug,
-      //   };
-      //   this.$firebase.firestore().collection('jobs').doc(this.id).set(payload).then(() => {
-      //     alert('Novo projeto criado com sucesso!');
-      //     this.dataN = [];
-      //   })
-      //   .catch((error) => {
-      //     // eslint-disable-next-line no-alert
-      //     alert(error);
-      //   });
-      // }
     },
-    handleFile({ target }) {
+    handleBanner({ target }) {
       const split = target.files[0].name.split('.');
       this.banner.name = `${split[0]}-${new Date().getTime()}.${split.at(-1)}`
       this.banner.file = target.files[0]
+    },
+    handleFile({ target }) {
+      const file = target.files[0]
+      const split = target.files[0].name.split('.');
+      this.temp.push({
+        type: this.checkedStart.type,
+        name: `${split[0]}-${new Date().getTime()}.${split.at(-1)}`,
+        file,
+        title: this.title,
+        id: new Date().getTime()
+      })
     },
   },
 };
