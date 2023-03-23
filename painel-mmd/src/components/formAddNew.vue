@@ -108,7 +108,9 @@ export default {
       temp: [],
       urlMedia: null,
       name: null,
-      title: null
+      title: null,
+      completedImagesUpload: 0,
+      totalImages: 0
     };
   },
   computed: {
@@ -117,6 +119,15 @@ export default {
     ])
   },
   watch: {
+    completedImagesUpload(val) {
+      if (val === this.totalImages * 100) {
+        setTimeout(() => {
+          const project = this.dataNew
+          console.log('inserindo dados finais', this.dataNew)
+          addNewProject(project)
+        }, 5000);
+      }
+    },
     'dataNew.title' (val) {
       const slug = val.replace(/[' ']/g, '-');
       this.slug = slug;
@@ -180,32 +191,36 @@ export default {
                   return
                 }
               })
-              this.receipt.forEach((receipt, index, array) => {
-                console.log('inserindo imagens', {receipt})
-                if (receipt.type === 'image') {
-                  const uploadTaskWorks = uploadBytesResumable(storageRef, receipt.file, metadata);
-                  uploadTaskWorks.on('state_changed',
-                    (snapshot) => {},
-                    (error) => {},
-                    () => {
-                      // Upload completed successfully, now we can get the download URL
-                      getDownloadURL(uploadTaskWorks.snapshot.ref).then((downloadURL) => {
-                        console.log('File available at', downloadURL, index);
-                        this.dataNew.receipt.push({ image: downloadURL, type: receipt.type, title: receipt.title })
-                        if (index === array.length -1) {
-                          console.log('imagens inseridas')
-                          console.log('inserindo dados finais', this.dataNew)
-                          addNewProject(this.dataNew)
-                        }
-                      });
-                    }
-                  );
-                  return
-                }
-              })
+              this.totalImages = this.receipt.filter((receipt) => receipt.type === 'image').length
 
-              // console.log('inserindo novo projeto', this.dataNew)
-              // addNewProject(this.dataNew)
+              if (this.totalImages > 0) {
+                this.receipt.forEach((receipt) => {
+                  console.log('inserindo imagens', {receipt})
+                  if (receipt.type === 'image') {
+                    const storageWorkRef = ref(storage, `${this.dataNew.slug}/${receipt.name}`);
+                    const uploadTaskWorks = uploadBytesResumable(storageWorkRef, receipt.file, metadata);
+                    uploadTaskWorks.on('state_changed',
+                      (snapshot) => {
+                        if (snapshot.bytesTransferred / snapshot.totalBytes * 100 === 100) {
+                          this.completedImagesUpload += snapshot.bytesTransferred / snapshot.totalBytes * 100
+                        }
+                      },
+                      (error) => {},
+                      () => {
+                        // Upload completed successfully, now we can get the download URL
+                        getDownloadURL(uploadTaskWorks.snapshot.ref).then((downloadURL) => {
+                          console.log('File available at', downloadURL);
+                          this.dataNew.receipt.push({ image: downloadURL, type: receipt.type, title: receipt.title })
+                        });
+                      }
+                    );
+                    return
+                  }
+                })
+              } else {
+                console.log('inserindo dados finais', this.dataNew)
+                addNewProject(this.dataNew)
+              }
             });
           }
         );
