@@ -1,10 +1,9 @@
 <template>
   <form @submit.prevent="addNewData">
-    <input placeholder="Nome" id="titleProject" v-model="dataNew.title" name="titleProject" type="text">
-    <input placeholder="credits" id="credits" v-model="dataNew.credits" name="credits" type="text">
-    <input placeholder="description" id="description" v-model="dataNew.description" name="description" type="text">
+    <input placeholder="Título do projeto" id="titleProject" v-model="dataNew.title" name="titleProject" type="text">
+    <input placeholder="Créditos do projeto" id="credits" v-model="dataNew.credits" name="credits" type="text">
+    <input placeholder="Descrição do projeto" id="description" v-model="dataNew.description" name="description" type="text">
     <p class="lower">Slug: {{ slug }}</p>
-    <!-- <p class="none lower">{{ id }}</p> -->
 
       <div class="col s12">
         <div class="file-field input-field">
@@ -20,27 +19,30 @@
         </div>
       </div>
 
-      <label>
-        <input v-model="checkedStart" name="ImagemRadio" :value="{ type: 'image', media: null }" type="radio" />
-        <span>Imagem</span>
-      </label>
-      <label>
-        <input v-model="checkedStart" name="gifRadio" :value="{ type: 'gif', media: null }" type="radio" />
-        <span>Url de gif</span>
-      </label>
-      <label>
-        <input v-model="checkedStart" name="videoRadio" :value="{ type: 'video', media: null }" type="radio" />
-        <span>Url de video</span>
-      </label>
+      <div class="selectors">
+        <label>
+          <input v-model="checkedStart" name="ImagemRadio" :value="{ type: 'image', media: null }" type="radio" />
+          <span>Adicionar imagem</span>
+        </label>
+        <label>
+          <input v-model="checkedStart" name="gifRadio" :value="{ type: 'gif', media: null }" type="radio" />
+          <span>Adicionar um GIF por URL</span>
+        </label>
+        <label>
+          <input v-model="checkedStart" name="videoRadio" :value="{ type: 'video', media: null }" type="radio" />
+          <span>Adicionar um vídeo por URL</span>
+        </label>
+      </div>
 
-      <div v-for="(receipt, index) in receipt" :key="index">
+      <div v-for="(receipt, index) in receipt" class="listing" :key="index">
         <p>
           {{ receipt.name }}
-          <p class="remove red-text" @click.prevent="() => removeItem(dataNew, receipt.id)">X</p>
         </p>
+        <p class="remove red-text" @click.prevent="() => removeItem(dataNew, receipt.id)">X</p>
       </div>
 
       <div v-if="checkedStart?.type === 'image'">
+        <p>Voce pode escolher uma imagem para adicionar ao projeto</p>
         <input placeholder="Titulo da Imagem" id="title" v-model="title" name="title" type="text">
         <div class="file-field input-field">
           <div class="btn">
@@ -53,32 +55,38 @@
             <input class="file-path validate" type="text">
           </div>
         </div>
-        <button class="btn blue darken-2" @click="() => save()">Salvar</button>
-        <button class="btn blue darken-2" @click="() => cancel()">Cancelar</button>
+        <div class="actions">
+          <button class="btn blue darken-2" :disabled="isFileSaveDisabled()" @click="() => save()">Salvar</button>
+          <button class="btn red darken-3" @click="() => cancel()">Cancelar</button>
+        </div>
       </div>
       <div v-if="checkedStart?.type === 'gif'">
-        <input placeholder="Nome do gif" id="name" required v-model="name" name="name" type="text">
+        <p>Envie a URL de um GIF</p>
+        <input placeholder="Nome do gif* (Obrigatório)" id="name" required v-model="name" name="name" type="text">
         <input placeholder="Titulo do gif" id="title" v-model="title" name="title" type="text">
-        <input placeholder="Cole a url do gif aqui" id="gif" v-model="urlMedia" name="gif" type="text">
-        <button class="btn blue darken-2" @click="() => save()">Salvar</button>
-        <button class="btn blue darken-2" @click="() => cancel()">Cancelar</button>
+        <input placeholder="Cole a url do gif aqui* (Obrigatório)" id="gif" v-model="urlMedia" name="gif" type="text">
+        <div class="actions">
+          <button class="btn blue darken-2" :disabled="isUrlSaveDisabled()" @click="() => save(true)">Salvar</button>
+          <button class="btn red darken-3" @click="() => cancel()">Cancelar</button>
+        </div>
       </div>
       <div v-if="checkedStart?.type === 'video'">
-        <input placeholder="Nome do video" id="name" required v-model="name" name="name" type="text">
+        <p>Envie a URL de um Video</p>
+        <input placeholder="Nome do video* (Obrigatório)" id="name" required v-model="name" name="name" type="text">
         <input placeholder="Titulo do video" id="video" v-model="title" name="title" type="text">
-        <input v-if="checkedStart?.type === 'video'" placeholder="Cole a url do video aqui" id="video" v-model="urlMedia" name="video" type="text">
-        <button class="btn blue darken-2" @click="() => save()">Salvar</button>
-        <button class="btn blue darken-2" @click="() => cancel()">Cancelar</button>
+        <input v-if="checkedStart?.type === 'video'" placeholder="Cole a url do video aqui* (Obrigatório)" id="video" v-model="urlMedia" name="video" type="text">
+        <div class="actions">
+          <button class="btn blue darken-2" :disabled="isUrlSaveDisabled()" @click="() => save(true)">Salvar</button>
+          <button class="btn red darken-3" @click="() => cancel()">Cancelar</button>
+        </div>
       </div>
       <br>
-      <input class="btn blue darken-2" type="submit" value="Adicionar">
+      <input class="btn blue darken-2" type="submit" :disabled="isCreateNewDisabled()" value="Criar novo projeto">
   </form>
 </template>
 
 <script>
 import addNewProject from '@/services/addNewProject.js'
-import uploadImage from '@/services/uploadImage.js'
-import uploadImageWork from '@/services/uploadImageWork.js'
 import { app } from "@/firebase/index";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { mapGetters } from 'vuex'
@@ -110,13 +118,9 @@ export default {
       name: null,
       title: null,
       completedImagesUpload: 0,
-      totalImages: 0
+      totalImages: 0,
+      selectImage: false,
     };
-  },
-  computed: {
-    ...mapGetters([
-      'images',
-    ])
   },
   watch: {
     completedImagesUpload(val) {
@@ -134,30 +138,42 @@ export default {
       let lowerS = slug.toLowerCase();
       this.dataNew.slug = lowerS;
     },
-    urlMedia(val) {
-      this.temp.push({
-        type: this.checkedStart.type,
-        image: val,
-        name: this.name,
-        title: this.title,
-        id: new Date().getTime()
-      })
-    }
   },
   methods: {
+    isCreateNewDisabled() {
+      return !this.receipt.length || !this.dataNew.title || !this.dataNew.credits || !this.dataNew.description
+        || !this.dataNew.slug || !this.banner
+    },
+    isFileSaveDisabled() {
+      return !this.selectImage
+    },
+    isUrlSaveDisabled() {
+      return !this.name || !this.urlMedia
+    },
     removeItem(data, id) {
       console.log({data, id})
       this.receipt = data.receipt.filter((receipt) => receipt.id !== id)
     },
     clear() {
+      this.selectImage = false
       this.checkedStart = null
       this.title = null
       this.temp = []
       this.name = null
       this.urlMedia = null
     },
-    save() {
+    save(notImage) {
+      if (notImage) {
+        this.temp.push({
+          type: this.checkedStart.type,
+          image: this.urlMedia,
+          name: this.name,
+          title: this.title,
+          id: new Date().getTime()
+        })
+      }
       this.receipt.push(...this.temp)
+      console.log(this.receipt)
       this.clear()
     },
     cancel() {
@@ -241,17 +257,48 @@ export default {
         title: this.title,
         id: new Date().getTime()
       })
+      this.selectImage = true
     },
   },
 };
 </script>
 
 <style lang="scss">
-  .none {
-    display: none;
-    text-transform: lowercase;
+.selectors {
+  display: flex;
+  flex-direction: column;
+}
+.actions {
+  display: flex;
+  gap: 8px;
+}
+.listing {
+  display: flex;
+  gap: 4px;
+  background-color: #b2b2c3;
+  height: 40px;
+  border-radius: 4px;
+  padding: 8px;
+  width: 300px;
+  justify-content: space-between;
+  cursor: pointer;
+  border: 1px inset;
+  margin: 4px 0;
+  border-color: #3d3d50;
+  p {
+    max-width: 250px;
+    margin: 0;
+    overflow: hidden;
+    color: white;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
-  .lower{
-    text-transform: lowercase;
-  }
+}
+.none {
+  display: none;
+  text-transform: lowercase;
+}
+.lower{
+  text-transform: lowercase;
+}
 </style>
