@@ -8,12 +8,14 @@ export default async function getStorageImages(projectName) {
   listAll(storageRef).then((res) => {
     res.items.forEach((itemRef) => {
       getDownloadURL(itemRef).then((url) => {
+        console.log(url)
         imagesUrl.push(url)
       })
     });
   }).catch((error) => {
     console.log({error})
   });
+  console.log(imagesUrl)
 
   return imagesUrl
 }
