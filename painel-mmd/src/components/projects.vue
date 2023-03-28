@@ -3,20 +3,35 @@
     <div v-for="(item, key) in projectsData"
     :key="key"
     class="projeto modal-trigger-custom">
-      <p class="remove red-text" @click.prevent="removeItem(projectData[key].name)">X</p>
-      <div class="row">
-        <div class="img-area col s12 m6">
-          <img :src="getImageUrl(item.banner)">
-        </div>
-        <div class="infos col s12 m6">
-          <p>Nome: {{ item.title }}</p>
-          <p>Imagens: {{ item.media.length }}</p>
-          <p>Slug: {{ item.slug }}</p>
-          <p>Postado em: {{ item.date }} - Última edição: {{ item?.last_edit }}</p>
-          <button class="trigger btn disabled" @click="() =>initModal(item.slug)">Editar</button>
+      <div v-if="item.slug !== loadItem" class="item">
+        <p class="remove red-text" @click.prevent="() => removeItem(item.slug)">X</p>
+        <div class="row">
+          <div class="img-area col s12 m6">
+            <img :src="item.banner">
+          </div>
+          <div class="infos col s12 m6">
+            <p>Nome: {{ item.title }}</p>
+            <p>Imagens: {{ item.receipt.length }}</p>
+            <p>Slug: {{ item.slug }}</p>
+            <p>Postado em: {{ item.date }} - Última edição: {{ item?.lastUpdate }}</p>
+            <button class="trigger btn" @click="() =>initModal(item.slug)">Editar</button>
+          </div>
         </div>
       </div>
-      <!-- <modal-edit :projeto="item" :id="item.slug" /> -->
+      <div v-else class="loader">
+        <div class="preloader-wrapper active">
+          <div class="spinner-layer spinner-red-only">
+            <div class="circle-clipper left">
+              <div class="circle"></div>
+            </div><div class="gap-patch">
+              <div class="circle"></div>
+            </div><div class="circle-clipper right">
+              <div class="circle"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <modal-edit @updatedData="() => updatedData()" v-if="opennedModal === item.slug" :projeto="item" :id="item.slug" />
     </div>
   </section>
 </template>
@@ -24,6 +39,7 @@
 <script>
 import modalEdit from './modal.vue'
 import getProject from "@/services/getProjects";
+import deleteProject from "@/services/deleteProject";
 
 export default {
   name: 'projects',
@@ -34,58 +50,35 @@ export default {
     return {
       projectsData: null,
       projectData: [],
-      opennedModal: null
+      opennedModal: null,
+      loadItem: null
     };
-  },
-  mounted() {
-    // this.getData();
   },
   beforeMount() {
     this.displayProjects();
   },
   methods: {
+    updatedData() {
+      this.loaded = false;
+      alert(`Projeto ${this.opennedModal} atualizado!`)
+      this.opennedModal = null
+      this.displayProjects();
+    },
     async displayProjects() {
       this.projectsData = await getProject();
       this.loaded = true;
     },
-    getImageUrl(url) {
-      return 'https://cdn.pixabay.com/photo/2023/01/01/21/33/mountain-7690893_960_720.jpg';
-    },
-    getData() {
-      const ref = this.$firebase.firestore().collection('jobs');
-      const ctx = this;
-      ref.get().then((docs) => {
-        docs.forEach((doc) => {
-          const dataProject = {
-            name: doc.data().Nome,
-            slug: doc.data().Slug,
-            type: doc.data().Tipo,
-            images: doc.data().Imagens,
-            date: doc.data().Data,
-            last_edit: doc.data().Last,
-            alt: doc.data().Nome,
-          };
-          ctx.projectData.push(dataProject);
-        });
-        setTimeout(() => {
-          this.initModal();
-        }, 500);
-      });
-    },
     initModal(slug) {
       this.opennedModal = slug
     },
-    removeItem(id) {
-      const lower = id.toLowerCase();
-      const newId = lower.replace(/[' ']/g, '_');
-      this.$firebase.firestore().collection('jobs').doc(newId).delete().then(() => {
-        // eslint-disable-next-line no-alert
-        alert('Entrada removida do histórico');
-      })
-        .catch((error) => {
-          // eslint-disable-next-line no-console
-          console.error('Error removing document: ', error);
-      });
+    async removeItem(id) {
+      this.loadItem = id
+      const response = await deleteProject(id)
+      if (response.status === 'finished') {
+        this.loaded = false;
+        this.displayProjects();
+        this.loadItem = null
+      }
     },
   },
 };
@@ -96,5 +89,11 @@ export default {
     img {
       width: 250px;
     }
+  }
+  .loader {
+    display: flex;
+    justify-content: center;
+    height: 160px;
+    align-items: center;
   }
 </style>

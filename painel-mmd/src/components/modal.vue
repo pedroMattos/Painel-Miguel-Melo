@@ -3,14 +3,17 @@
   <div :id="identificador" class="custom row">
     <div class="content">
       <h4>{{ dados.title }}</h4>
-      <div class="col s12 m4" v-for="image in images" :key="image">
-        {{ image }}
-        <div>
-          <img :src="image" alt="">
+      <div class="col s12 m4" v-for="(receipt, index) in dados.receipt" :key="index">
+        <div class="image-area">
+          <p class="remove red-text" @click.prevent="() => removeItem(index)">X</p>
+          <img v-if="receipt.type === 'image'" :src="receipt.image" alt="">
+          <iframe v-else :src="receipt.image" frameborder="0" allow="autoplay" scrolling="no"></iframe>
+
+          <input v-model="receipt.title" placeholder="Titulo da imagem" type="text">
         </div>
       </div>
       <form @submit.prevent="attData">
-        <div class="row">
+        <!-- <div class="row">
           <div class="col s12">
             <div class="file-field input-field">
               <div class="btn">
@@ -23,21 +26,12 @@
                 <input class="file-path validate" type="text">
               </div>
             </div>
-            <p
-            v-if="receipt.name"
-            >{{ receipt.name }}</p>
-            <button v-if="receipt.name" @click="this.$set(receipt, 'name', null)">Remover</button>
           </div>
-        </div>
-        {{ dados }}
+        </div> -->
         <div class="row">
           <div class="input-field col s6">
             <input v-model="dados.title" type="text">
             <label for="email">Nome</label>
-          </div>
-          <div class="input-field col s6">
-            <input v-model="dados.slug" type="text">
-            <label for="email">Slug</label>
           </div>
           <div class="input-field col s12">
             <textarea id="credits" v-model="dados.credits" class="materialize-textarea"></textarea>
@@ -48,15 +42,17 @@
             <label for="description">Descrição</label>
           </div>
         </div>
-        <input class="btn blue darken-2" type="submit" value="Atualizar">
-        <button @click.prevent="close" class="btn red accent-4">Cancelar</button>
+        <div class="actions">
+          <input class="btn blue darken-2" :disabled="isInvalidProject()" type="submit" value="Atualizar">
+          <button @click.prevent="close" class="btn red accent-4">Cancelar</button>
+        </div>
       </form>
     </div>
   </div>
 </template>
 
 <script>
-import getStorageImages from '../services/getStorage';
+import updateProject from '../services/updateProject';
 
 export default {
   name: 'modal-edit',
@@ -71,72 +67,24 @@ export default {
       },
     };
   },
-  beforeMount() {
-    getStorageImages('Pardini/')
-  },
   methods: {
-    displayImages() {
-      this.images = getStorageImages('Pardini/')
+    isInvalidProject() {
+      return !this.dados.title || !this.dados.receipt.length
+    },
+    removeItem(receiptIndex) {
+      this.dados.receipt = this.dados.receipt.filter(((image, index) => index !== receiptIndex))
+    },
+    async attData() {
+      const response = await updateProject(this.dados)
     }
   },
-  // computed: {
-  //   fileName() {
-  //     const {receipt} = this.dados;
-
-  //     if (receipt) {
-  //       const split = receipt.name.split('.');
-  //       return `${split[0]}-${new Date().getTime()}.${split[1]}`
-  //     } else {
-  //       return ''
-  //     }
-  //   },
-  // },
-  // methods: {
-  //   async attData() {
-  //     const now = new Date;
-  //     const id = this.dados.slug;
-  //     const newId = id.replace(/[-]/g, '_');
-  //     const date = now.getDate() +'/'+ now.getMonth()
-  //     const newData = {
-  //         Nome: this.dados.name,
-  //         Slug: this.dados.slug,
-  //         Tipo: this.dados.type,
-  //         Imagens: this.dados.images,
-  //         Last: date,
-  //         // last_edit: doc.data().Last,
-  //     };
-  //         if (this.receipt) {
-  //           const snapshot = await this.$firebase.storage()
-  //             .ref(this.dados.name)
-  //             .child(this.fileName)
-  //             .put(this.dados.receipt);
-
-  //             const url = await snapshot.ref.getDownloadURL();
-  //             this.dados.images.push(url)
-  //                   this.$firebase.firestore().collection('jobs').doc(newId).update(newData,
-  //       ).then(() => {
-  //         // eslint-disable-next-line no-alert
-  //         alert('Atualizado com sucesso!');
-  //         const custom = document.getElementById(this.dados.slug);
-  //         custom.removeAttribute('style');
-  //       })
-  //         .catch((error) => {
-  //           // eslint-disable-next-line no-alert
-  //           alert(error);
-  //           const custom = document.getElementById(this.dados.slug);
-  //           custom.removeAttribute('style');
-  //         });
-  //         }
-  //     },
-  //     close() {
-  //       const custom = document.getElementById(this.dados.slug);
-  //       custom.removeAttribute('style');
-  //     },
-  //     handleFile({ target }) {
-  //       this.dados.receipt = target.files[0]
-  //       this.receipt = target.files[0];
-  //       console.log(this.dados.images);
-  //     },
-  // },
 };
 </script>
+
+<style lang="scss" scoped>
+.image-area {
+  border: 1px solid green;
+  border-radius: 4px;
+  padding: 4px;
+}
+</style>

@@ -3,6 +3,12 @@ import { collection, getFirestore, getDocs } from "firebase/firestore";
 
 export default async function getProject() {
   const dbReference = getFirestore(app);
-  const querySnapshot = await getDocs(collection(dbReference, "works"));
-  return querySnapshot.docs.map((doc) => doc.data());
+  let querySnapshot
+  try {
+    querySnapshot = await getDocs(collection(dbReference, "works"));
+  } catch (e) {
+    console.log(e)
+  } finally {
+    return querySnapshot.docs.map((doc) => doc.data());
+  }
 }

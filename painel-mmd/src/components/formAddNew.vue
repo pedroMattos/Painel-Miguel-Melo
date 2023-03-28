@@ -1,5 +1,19 @@
 <template>
   <form @submit.prevent="addNewData">
+    <div v-if="loader" class="loader">
+      <div class="preloader-wrapper small active">
+        <div class="spinner-layer spinner-green-only">
+          <div class="circle-clipper left">
+            <div class="circle"></div>
+          </div><div class="gap-patch">
+            <div class="circle"></div>
+          </div><div class="circle-clipper right">
+            <div class="circle"></div>
+          </div>
+        </div>
+      </div>
+      <p>Criando projeto, só um momento...</p>
+    </div>
     <input placeholder="Título do projeto" id="titleProject" v-model="dataNew.title" name="titleProject" type="text">
     <input placeholder="Créditos do projeto" id="credits" v-model="dataNew.credits" name="credits" type="text">
     <input placeholder="Descrição do projeto" id="description" v-model="dataNew.description" name="description" type="text">
@@ -89,7 +103,6 @@
 import addNewProject from '@/services/addNewProject.js'
 import { app } from "@/firebase/index";
 import { getStorage, ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { mapGetters } from 'vuex'
 export default {
   name: 'new-form',
   data() {
@@ -120,6 +133,7 @@ export default {
       completedImagesUpload: 0,
       totalImages: 0,
       selectImage: false,
+      loader: false
     };
   },
   watch: {
@@ -129,14 +143,32 @@ export default {
           const project = this.dataNew
           console.log('inserindo dados finais', this.dataNew)
           addNewProject(project)
+          this.dataNew = {
+            title: null,
+            credits: null,
+            description: null,
+            date: null,
+            slug: null,
+            banner: null,
+            receipt: []
+          }
+          this.receipt = []
+          this.banner = {
+            name: null,
+            file: null
+          }
+          this.slug = null
+          this.loader = false
         }, 5000);
       }
     },
     'dataNew.title' (val) {
-      const slug = val.replace(/[' ']/g, '-');
-      this.slug = slug;
-      let lowerS = slug.toLowerCase();
-      this.dataNew.slug = lowerS;
+      if (val) {
+        const slug = val.replace(/[' ']/g, '-');
+        this.slug = slug;
+        let lowerS = slug.toLowerCase();
+        this.dataNew.slug = lowerS;
+      }
     },
   },
   methods: {
@@ -148,10 +180,9 @@ export default {
       return !this.selectImage
     },
     isUrlSaveDisabled() {
-      return !this.name || !this.urlMedia
+      return !this.name || !this.urlMedia || this.loader
     },
     removeItem(data, id) {
-      console.log({data, id})
       this.receipt = data.receipt.filter((receipt) => receipt.id !== id)
     },
     clear() {
@@ -180,6 +211,7 @@ export default {
       this.clear()
     },
     addNewData() {
+      this.loader = true
       const storage = getStorage(app);
       const now = new Date;
       const date = now.getDate() +'/'+ now.getMonth() + '/' + now.getFullYear()
@@ -264,6 +296,13 @@ export default {
 </script>
 
 <style lang="scss">
+.loader {
+  display: flex;
+  gap: 5px;
+  p {
+    font-weight: 700;
+  }
+}
 .selectors {
   display: flex;
   flex-direction: column;
