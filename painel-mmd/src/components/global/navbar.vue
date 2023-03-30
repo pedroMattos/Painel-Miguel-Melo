@@ -6,21 +6,22 @@
       </router-link>
       <ul id="nav-mobile" class="right hide-on-med-and-down">
         <li><router-link :to="{ name: 'NewProject' }">Adicionar</router-link></li>
-        <li @click.prevent="logout"><a href="#">Logout</a></li>
+        <li @click.prevent="logout"><a href="/">Logout</a></li>
       </ul>
     </div>
   </nav>
 </template>
 
 <script>
+import logoutUser from '../../services/logoutUser';
 export default {
   name: 'navbar',
   methods: {
     async logout() {
-      await this.$firebase.auth().signOut();
-      this.$router.push({ name: 'Login' });
+      logoutUser()
       localStorage.removeItem('Uid')
-      // location.reload();
+      this.$router.push({ name: 'Login' });
+      window.location.reload();
     },
   }
 };

@@ -43,8 +43,8 @@
           </div>
         </div>
         <div class="actions">
-          <input class="btn blue darken-2" :disabled="isInvalidProject()" type="submit" value="Atualizar">
-          <button @click.prevent="close" class="btn red accent-4">Cancelar</button>
+          <input class="btn blue darken-2" :disabled="isInvalidProject()" @click="() => $emit('reload', true)" type="submit" value="Atualizar">
+          <button @click.prevent="() => $emit('cancel', true)" class="btn red accent-4">Cancelar</button>
         </div>
       </form>
     </div>
@@ -75,6 +75,8 @@ export default {
       this.dados.receipt = this.dados.receipt.filter(((image, index) => index !== receiptIndex))
     },
     async attData() {
+      const now = new Date()
+      this.dados.lastUpdate = now.getDate() +'/'+ now.getMonth() + '/' + now.getFullYear()
       const response = await updateProject(this.dados)
     }
   },

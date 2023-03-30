@@ -31,7 +31,9 @@
           </div>
         </div>
       </div>
-      <modal-edit @updatedData="() => updatedData()" v-if="opennedModal === item.slug" :projeto="item" :id="item.slug" />
+      <modal-edit @reload="() => updatedData()" @cancel="() => opennedModal = null"
+        v-if="opennedModal === item.slug" :projeto="item"
+        :id="item.slug" :toLocaleString="''" :toString="''" />
     </div>
   </section>
 </template>
@@ -55,18 +57,23 @@ export default {
     };
   },
   beforeMount() {
+    if (!localStorage.getItem('Uid')) {
+      this.$router.push({ name: 'Login' });
+      window.location.reload();
+    }
     this.displayProjects();
   },
   methods: {
     updatedData() {
+      this.loadItem = this.opennedModal
       this.loaded = false;
-      alert(`Projeto ${this.opennedModal} atualizado!`)
       this.opennedModal = null
       this.displayProjects();
     },
     async displayProjects() {
       this.projectsData = await getProject();
       this.loaded = true;
+      this.loadItem = null
     },
     initModal(slug) {
       this.opennedModal = slug
