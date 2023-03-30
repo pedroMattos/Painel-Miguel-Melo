@@ -43,7 +43,7 @@
           </div>
         </div>
         <div class="actions">
-          <input class="btn blue darken-2" :disabled="isInvalidProject()" @click="() => $emit('reload', true)" type="submit" value="Atualizar">
+          <input class="btn blue darken-2" :disabled="isInvalidProject()" @click="attData" type="submit" value="Atualizar">
           <button @click.prevent="() => $emit('cancel', true)" class="btn red accent-4">Cancelar</button>
         </div>
       </form>
@@ -78,6 +78,7 @@ export default {
       const now = new Date()
       this.dados.lastUpdate = now.getDate() +'/'+ now.getMonth() + '/' + now.getFullYear()
       const response = await updateProject(this.dados)
+      this.$emit('reload', true)
     }
   },
 };

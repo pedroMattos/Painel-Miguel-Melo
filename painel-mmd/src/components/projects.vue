@@ -57,10 +57,6 @@ export default {
     };
   },
   beforeMount() {
-    if (!localStorage.getItem('Uid')) {
-      this.$router.push({ name: 'Login' });
-      window.location.reload();
-    }
     this.displayProjects();
   },
   methods: {
