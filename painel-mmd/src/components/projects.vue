@@ -11,7 +11,7 @@
           </div>
           <div class="infos col s12 m6">
             <p>Nome: {{ item.title }}</p>
-            <p>Imagens: {{ item.receipt.length }}</p>
+            <p>Imagens: {{ item.receipt?.length }}</p>
             <p>Slug: {{ item.slug }}</p>
             <p>Postado em: {{ item.date }} - Última edição: {{ item?.lastUpdate }}</p>
             <button class="trigger btn" @click="() =>initModal(item.slug)">Editar</button>
@@ -34,6 +34,9 @@
       <modal-edit @reload="() => updatedData()" @cancel="() => opennedModal = null"
         v-if="opennedModal === item.slug" :projeto="item"
         :id="item.slug" :toLocaleString="''" :toString="''" />
+    </div>
+    <div v-if="!projectsData.length">
+      <p>Nenhum projeto encontrado você pode adicionar <router-link :to="{ name: 'NewProject' }">aqui</router-link></p>
     </div>
   </section>
 </template>
