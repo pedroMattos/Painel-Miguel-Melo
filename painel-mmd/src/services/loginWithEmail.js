@@ -18,6 +18,7 @@ export default async function loginWithEmail(email, password) {
       console.log({error})
       const errorCode = error.code;
       const errorMessage = error.message;
+      response = { status: 'login-error', msg: errorMessage }
     });
   } catch (e) {
     console.log(e)

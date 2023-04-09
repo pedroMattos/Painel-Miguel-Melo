@@ -133,7 +133,8 @@ export default {
       completedImagesUpload: 0,
       totalImages: 0,
       selectImage: false,
-      loader: false
+      loader: false,
+      teste: null
     };
   },
   watch: {
@@ -143,22 +144,7 @@ export default {
           const project = this.dataNew
           console.log('inserindo dados finais', this.dataNew)
           addNewProject(project)
-          this.dataNew = {
-            title: null,
-            credits: null,
-            description: null,
-            date: null,
-            slug: null,
-            banner: null,
-            receipt: []
-          }
-          this.receipt = []
-          this.banner = {
-            name: null,
-            file: null
-          }
-          this.slug = null
-          this.loader = false
+          this.clearIfOnlyHasVideosOrGifs()
         }, 5000);
       }
     },
@@ -174,7 +160,7 @@ export default {
   methods: {
     isCreateNewDisabled() {
       return !this.receipt.length || !this.dataNew.title || !this.dataNew.credits || !this.dataNew.description
-        || !this.dataNew.slug || !this.banner
+        || !this.dataNew.slug || !this.banner.file
     },
     isFileSaveDisabled() {
       return !this.selectImage
@@ -192,6 +178,24 @@ export default {
       this.temp = []
       this.name = null
       this.urlMedia = null
+    },
+    clearIfOnlyHasVideosOrGifs() {
+      this.dataNew = {
+            title: null,
+            credits: null,
+            description: null,
+            date: null,
+            slug: null,
+            banner: null,
+            receipt: []
+          }
+          this.receipt = []
+          this.banner = {
+            name: null,
+            file: null
+          }
+          this.slug = null
+          this.loader = false
     },
     save(notImage) {
       if (notImage) {
@@ -268,6 +272,7 @@ export default {
               } else {
                 console.log('inserindo dados finais', this.dataNew)
                 addNewProject(this.dataNew)
+                this.clearIfOnlyHasVideosOrGifs()
               }
             });
           }

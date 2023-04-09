@@ -14,7 +14,21 @@
             <label for="password">Password</label>
           </div>
         </div>
-        <input class="btn" type="submit" value="Entrar">
+        <div v-if="load" class="loader">
+          <div class="preloader-wrapper small active">
+            <div class="spinner-layer spinner-green-only">
+              <div class="circle-clipper left">
+                <div class="circle"></div>
+              </div><div class="gap-patch">
+                <div class="circle"></div>
+              </div><div class="circle-clipper right">
+                <div class="circle"></div>
+              </div>
+            </div>
+          </div>
+          <p>Entrando...</p>
+        </div>
+        <input v-else class="btn" type="submit" value="Entrar">
         <p class="red-text">{{ error }}</p>
       </form>
   </section>
@@ -29,6 +43,7 @@ export default {
       mail: null,
       password: null,
       error: null,
+      load: false
     };
   },
   mounted() {
@@ -39,11 +54,18 @@ export default {
   },
   methods: {
     async login() {
+      this.load = true
       const response = await loginWithEmail(this.mail, this.password)
-      console.log({response})
       
-      if (response.status)
+      if (response.status === 'finished') {
+        this.load = false
         this.$router.push({ name: 'Pannel' });
+        return
+      }
+      
+      
+      this.load = false
+      this.error = response.msg
     },
   },
 };
