@@ -142,7 +142,6 @@ export default {
       if (val === this.totalImages * 100) {
         setTimeout(() => {
           const project = this.dataNew
-          console.log('inserindo dados finais', this.dataNew)
           addNewProject(project)
           this.clearIfOnlyHasVideosOrGifs()
         }, 5000);
@@ -208,7 +207,6 @@ export default {
         })
       }
       this.receipt.push(...this.temp)
-      console.log(this.receipt)
       this.clear()
     },
     cancel() {
@@ -233,13 +231,14 @@ export default {
           () => {
             // Upload completed successfully, now we can get the download URL
             getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
-              console.log('File available at', downloadURL);
               this.dataNew.banner = downloadURL
 
-              console.log('percorrendo as imagens', this.receipt)
+              this.receipt.forEach((receipt, index) => {
+                receipt.order = index
+              })
               this.receipt.forEach((receipt) => {
                 if (receipt.type !== 'image') {
-                  this.dataNew.receipt.push({ image: receipt.image, type: receipt.type, title: receipt.title })
+                  this.dataNew.receipt.push({ image: receipt.image, type: receipt.type, title: receipt.title, order: receipt.order })
                   return
                 }
               })
@@ -247,7 +246,6 @@ export default {
 
               if (this.totalImages > 0) {
                 this.receipt.forEach((receipt) => {
-                  console.log('inserindo imagens', {receipt})
                   if (receipt.type === 'image') {
                     const storageWorkRef = ref(storage, `${this.dataNew.slug}/${receipt.name}`);
                     const uploadTaskWorks = uploadBytesResumable(storageWorkRef, receipt.file, metadata);
@@ -261,8 +259,7 @@ export default {
                       () => {
                         // Upload completed successfully, now we can get the download URL
                         getDownloadURL(uploadTaskWorks.snapshot.ref).then((downloadURL) => {
-                          console.log('File available at', downloadURL);
-                          this.dataNew.receipt.push({ image: downloadURL, type: receipt.type, title: receipt.title })
+                          this.dataNew.receipt.push({ image: downloadURL, type: receipt.type, title: receipt.title, order: receipt.order })
                         });
                       }
                     );
@@ -270,7 +267,6 @@ export default {
                   }
                 })
               } else {
-                console.log('inserindo dados finais', this.dataNew)
                 addNewProject(this.dataNew)
                 this.clearIfOnlyHasVideosOrGifs()
               }
